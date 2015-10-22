@@ -1,0 +1,133 @@
+<html>
+	<head>
+		<link href='https://fonts.googleapis.com/css?family=Roboto+Condensed:300,400,700' rel='stylesheet' type='text/css'>
+		<link href='https://fonts.googleapis.com/css?family=Oswald' rel='stylesheet' type='text/css'>
+		<style>
+			body {
+				margin: 0;
+				padding: 0;
+				font-family: "Roboto Condensed", sans-serif;
+			}
+			* {
+				box-sizing: border-box;
+			}
+			.title {
+				font-size: 2em;
+				font-family: "Oswald", sans-serif;
+				padding: 1em;
+				margin: 0;
+			}
+			form { padding-left: 2em; }
+			.result {
+				font-family: "Roboto Condensed", sans-serif;
+				padding: 0 2em;
+				margin: 0;
+				list-style-type: none;
+			}
+			.result > li h1 {
+				font-weight: 700;
+			}
+		</style>
+	</head>
+	<body>
+		<p class="title">Spotify Search Test</p>
+		<form>
+			<input id="searchQ" type="text" value="Enter artist name" \>
+			<label for="type">&nbsp;Type: </label>
+			<select id="type">
+				<option>Artist</option>
+				<option>Album</option>
+				<option>Track</option>
+			</select>
+			<label for="limit">&nbsp;Number of results</label>
+			<select id="limit">	
+				<option>1</option>
+				<option>5</option>
+				<option>10</option>
+				<option>20</option>
+			</select>
+			<button id="submit">Submit</button>
+		</form>	
+		<p id="temp"></p>
+		<ul id="result" class="result"></ul>
+	</body>
+	<script src="bower_components/fetch/fetch.js"></script>
+	<script>
+		var searchQ;
+		var searchType;
+		var searchLimit;
+		var node;
+		var trackName;
+		var tempData = document.querySelector("#temp");
+		var searchButton = document.querySelector("#submit");
+		var searchResults = document.querySelector("#result");
+		
+		var fetchData = {
+			getResponse: function checkStatus(response) {
+				if (response.status >= 200 && response.status < 300) {					
+					return response;
+				}
+				else {
+					var error = new Error(response.statusText);
+					error.response = response;
+					throw error;				
+				}
+			},
+			pJSON: function parseJSON (response) {
+					return response.json();
+			},
+			fetch: function()
+			{
+				fetch("https://api.spotify.com/v1/search?q=" + searchQ + "&type=" + searchType + "&limit=" + searchLimit, {
+			 	method: 'GET'				
+			  })
+			  .then(this.getResponse)			  
+			  .then(this.pJSON)
+			  .then(function(data) { 	
+				  console.log(data);				  				    
+				    for(var i = 0; i < searchLimit; i++) {						
+						node = document.createElement("LI");
+						switch(searchType) {
+							case 'Artist':
+								if (data.artists.total == 0) {
+									trackName = document.createTextNode("There were no results");
+									break;
+								}
+								trackName = document.createTextNode(data.artists.items[i].name)
+								break;
+							case 'Album':
+								if (data.albums.total == 0) {
+									trackName = document.createTextNode("There were no results");
+									break;
+								}
+								trackName = document.createTextNode(data.albums.items[i].name)
+								break;
+							case 'Track':
+								if (data.tracks.total == 0) {
+									trackName = document.createTextNode("There were no results");
+									break;
+								}
+								trackName = document.createTextNode(data.tracks.items[i].artists[0].name + " - " + data.tracks.items[i].name)
+								break;
+						}					
+						node.appendChild(trackName);
+						searchResults.appendChild(node);
+					}								  				  
+			  })
+			}
+		}		
+		
+		searchButton.onclick = function(e) {
+			e.preventDefault();
+			searchResults.innerHTML = ' ';
+			searchQ = document.querySelector("#searchQ").value;
+			searchType = document.querySelector("#type").value;
+			searchLimit = document.querySelector("#limit").value;
+			fetchData.fetch();
+		}	
+	</script>
+</html>
+
+
+													 
+													  
